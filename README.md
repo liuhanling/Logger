@@ -48,7 +48,7 @@ Logger.init(this);
  Or
  
 ```java
-LogConfig cfg = new LogConfig.Builder(this)
+LogConfig config = new LogConfig.Builder(this)
         .showThread(true)               // (可选) 显示线程信息，默认false
         .showMethod(5)                  // (可选) 显示方法条数，默认1
         .printLog(BuildConfig.DEBUG)    // (可选) 是否打印日志，默认true
