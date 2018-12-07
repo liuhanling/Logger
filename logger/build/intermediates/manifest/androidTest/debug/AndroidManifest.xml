@@ -13,6 +13,9 @@
         android:label="Tests for com.hanley.logger.test"
         android:targetPackage="com.hanley.logger.test" />
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application android:debuggable="true" >
         <uses-library android:name="android.test.runner" />
     </application>

@@ -4,6 +4,8 @@ import android.content.Context;
 
 public final class Logger {
 
+    public static final String TAG = "LOVE_LOGGER";
+
     private static Printer printer = null;
 
     private Logger() {

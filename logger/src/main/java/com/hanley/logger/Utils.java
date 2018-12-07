@@ -1,5 +1,6 @@
 package com.hanley.logger;
 
+import android.app.ApplicationErrorReport;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -40,6 +41,8 @@ public class Utils {
                 return "E";
             case Log.ASSERT:
                 return "A";
+            case ApplicationErrorReport.TYPE_CRASH:
+                return "C";
             default:
                 return "UNKNOWN";
         }

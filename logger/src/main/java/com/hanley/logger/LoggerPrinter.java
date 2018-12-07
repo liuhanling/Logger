@@ -26,7 +26,7 @@ public class LoggerPrinter implements Printer {
     private final Config config;
 
     public LoggerPrinter(Context context) {
-        this(LogConfig.Builder().build());
+        this(new LogConfig.Builder(context).build());
     }
 
     public LoggerPrinter(Config config) {

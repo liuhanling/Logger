@@ -1,5 +1,7 @@
 package com.hanley.logger;
 
+import android.annotation.SuppressLint;
+import android.app.ApplicationErrorReport;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,36 +14,28 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 public class LoggerWriter extends Handler implements Thread.UncaughtExceptionHandler {
 
     private static final int MAX_BYTES = 5 * 1024 * 1024;
+    @SuppressLint("SimpleDateFormat")
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    @SuppressLint("SimpleDateFormat")
+    private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("yyyy_MM_dd_HHmmss");
 
+    private final Context mContext;
     private final String mFolder;
-    private final int mMaxSize;
+    private final CrashCall mCrashCall;
 
     private String mFileName;
-    private SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
-    private SimpleDateFormat mTimeFormat = new SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.CHINA);
-
-    private Context mContext;
     private Thread.UncaughtExceptionHandler mHandler = Thread.getDefaultUncaughtExceptionHandler();
 
-    public LoggerWriter(Looper looper, String folder) {
-        this(looper, null, folder);
-    }
-
-    public LoggerWriter(Looper looper, Context context, String folder) {
-        this(looper, context, folder, MAX_BYTES);
-    }
-
-    public LoggerWriter(Looper looper, Context context, String folder, int maxSize) {
+    public LoggerWriter(Looper looper, Context context, String folder, CrashCall crashCall) {
         super(looper);
         this.mContext = context;
         this.mFolder = Utils.checkNotNull(folder);
-        this.mMaxSize = maxSize;
-        this.mFileName = String.format("%s.log", mDateFormat.format(new Date()));
+        this.mCrashCall = crashCall;
+        this.mFileName = String.format("%s.log", TIME_FORMAT.format(new Date()));
         Thread.setDefaultUncaughtExceptionHandler(this);
     }
 
@@ -52,10 +46,10 @@ public class LoggerWriter extends Handler implements Thread.UncaughtExceptionHan
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        if (mHandler != null && e == null) {
+        if (!handleException(e) && mHandler != null) {
             mHandler.uncaughtException(t, e);
         } else {
-            handleException(e);
+            exitSystem();
         }
     }
 
@@ -79,7 +73,7 @@ public class LoggerWriter extends Handler implements Thread.UncaughtExceptionHan
     }
 
     private File getFile() throws IOException {
-        String date = mDateFormat.format(new Date());
+        String date = DATE_FORMAT.format(new Date());
         File folder = new File(mFolder, date);
         if (!folder.exists()) {
             folder.mkdirs();
@@ -88,20 +82,28 @@ public class LoggerWriter extends Handler implements Thread.UncaughtExceptionHan
         File file = new File(folder, mFileName);
         if (!file.exists()) {
             file.createNewFile();
-        } else if (file.length() >= mMaxSize) {
-            mFileName = String.format("%s.log", mTimeFormat.format(new Date()));
+        } else if (file.length() >= MAX_BYTES) {
+            mFileName = String.format("%s.log", TIME_FORMAT.format(new Date()));
             file = new File(folder, mFileName);
         }
 
         return file;
     }
 
-    private void handleException(Throwable tr) {
-        Logger.e(tr, "Error");
-        exit();
+    private boolean handleException(Throwable t) {
+        Logger.log(ApplicationErrorReport.TYPE_CRASH, Logger.TAG, "Error", t);
+        if (t == null) {
+            return false;
+        }
+        if (mCrashCall != null) {
+            mCrashCall.handle();
+        } else {
+            exitSystem();
+        }
+        return true;
     }
 
-    private void exit() {
+    private void exitSystem() {
         new Thread() {
             @Override
             public void run() {
@@ -116,7 +118,6 @@ public class LoggerWriter extends Handler implements Thread.UncaughtExceptionHan
         } catch (InterruptedException e) {
             // ignore
         }
-
         Process.killProcess(Process.myPid());
         System.exit(1);
     }

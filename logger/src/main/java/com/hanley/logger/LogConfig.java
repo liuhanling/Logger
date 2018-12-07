@@ -1,178 +1,174 @@
 package com.hanley.logger;
 
-import android.os.Environment;
+import android.app.ApplicationErrorReport;
+import android.content.Context;
 import android.os.HandlerThread;
 import android.util.Log;
 
-import java.io.File;
-import java.text.DateFormat;
-import java.util.Date;
-
 public class LogConfig implements Config {
 
-    private static final int CHUNK_SIZE = 4000;
-
-    private static final int MIN_STACK_OFFSET = 5;
-
-    private static final char TOP_LEFT_CORNER = '┌';
-    private static final char BOTTOM_LEFT_CORNER = '└';
-    private static final char MIDDLE_CORNER = '├';
-    private static final char HORIZONTAL_LINE = '│';
-    private static final String DOUBLE_DIVIDER = "────────────────────────────────────────────────────────";
-    private static final String SINGLE_DIVIDER = "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
-    private static final String TOP_BORDER = TOP_LEFT_CORNER + DOUBLE_DIVIDER + DOUBLE_DIVIDER;
-    private static final String BOTTOM_BORDER = BOTTOM_LEFT_CORNER + DOUBLE_DIVIDER + DOUBLE_DIVIDER;
-    private static final String MIDDLE_BORDER = MIDDLE_CORNER + SINGLE_DIVIDER + SINGLE_DIVIDER;
-    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-    private static final String FOLDER = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar + "logger";
-
-    private final int method;
-    private final boolean thread;
-    private final boolean print;
-    private final boolean write;
+    private final Context context;
+    private final int showMethod;
+    private final boolean showThread;
+    private final boolean printLog;
+    private final boolean writeLog;
+    private final boolean crashLog;
+    private final CrashCall callback;
     private final String tag;
-    private LoggerWriter writer;
+
+    private LoggerWriter loggerWriter;
 
     private LogConfig(Builder builder) {
         Utils.checkNotNull(builder);
-        this.thread = builder.thread;
-        this.method = builder.method;
-        this.print = builder.print;
-        this.write = builder.write;
+        this.context = builder.context;
+        this.showThread = builder.showThread;
+        this.showMethod = builder.showMethod;
+        this.printLog = builder.printLog;
+        this.writeLog = builder.writeLog;
+        this.crashLog = builder.crashLog;
+        this.callback = builder.callback;
         this.tag = builder.tag;
         this.initWriter();
     }
 
     private void initWriter() {
-        if (write) {
-            HandlerThread thread = new HandlerThread("AndroidFileLogger." + FOLDER);
+        if (writeLog || crashLog) {
+            HandlerThread thread = new HandlerThread("AndroidFileLogger." + LogFormat.FOLDER);
             thread.start();
-            writer = new LoggerWriter(thread.getLooper(), FOLDER);
+            loggerWriter = new LoggerWriter(thread.getLooper(), context, LogFormat.FOLDER, callback);
         }
-    }
-
-    public static Builder Builder() {
-        return new Builder();
     }
 
     @Override
     public void log(int priority, String tag, String message) {
-        if (print || write) {
-            tag = getFormatTag(tag);
-
+        if (printLog || writeLog || crashLog) {
+            tag = LogFormat.getFormatTag(tag, this.tag);
             logTopBorder(priority, tag);
-            logHeaderContent(priority, tag, method);
-
-            byte[] bytes = message.getBytes();
-            int length = bytes.length;
-            if (length <= CHUNK_SIZE) {
-                if (method > 0) {
-                    logDivider(priority, tag);
-                }
-                logContent(priority, tag, message);
-                logBottomBorder(priority, tag);
-                return;
-            }
-            if (method > 0) {
-                logDivider(priority, tag);
-            }
-            for (int i = 0; i < length; i += CHUNK_SIZE) {
-                int count = Math.min(length - i, CHUNK_SIZE);
-                logContent(priority, tag, new String(bytes, i, count));
-            }
+            logThread(priority, tag);
+            logMethod(priority, tag);
+            logMessage(priority, tag, message);
             logBottomBorder(priority, tag);
         }
     }
 
     /**
-     * LOG 上边
+     * 顶部信息
      *
      * @param priority
      * @param tag
      */
     private void logTopBorder(int priority, String tag) {
-        logPrint(priority, tag, TOP_BORDER);
+        logPrint(priority, tag, LogFormat.TOP_BORDER);
     }
 
     /**
-     * LOG 头部
+     * 线程信息
      *
      * @param priority
      * @param tag
-     * @param method
      */
-    private void logHeaderContent(int priority, String tag, int method) {
-        if (thread) {
-            logPrint(priority, tag, HORIZONTAL_LINE + " Thread: " + Thread.currentThread().getName());
+    private void logThread(int priority, String tag) {
+        if (showThread) {
+            logPrint(priority, tag, LogFormat.HORIZONTAL_LINE + " Thread: " + Thread.currentThread().getName());
             logDivider(priority, tag);
-        }
-
-        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-        int stackOffset = getStackOffset(trace);
-        if (method + stackOffset > trace.length) {
-            method = trace.length - stackOffset - 1;
-        }
-
-        String level = "";
-        for (int i = method; i > 0; i--) {
-            int stackIndex = i + stackOffset;
-            if (stackIndex >= trace.length) {
-                continue;
-            }
-            StringBuilder builder = new StringBuilder();
-            builder.append(HORIZONTAL_LINE)
-                    .append(' ')
-                    .append(level)
-                    .append(getSimpleClassName(trace[stackIndex].getClassName()))
-                    .append(".")
-                    .append(trace[stackIndex].getMethodName())
-                    .append(" ")
-                    .append(" (")
-                    .append(trace[stackIndex].getFileName())
-                    .append(":")
-                    .append(trace[stackIndex].getLineNumber())
-                    .append(")");
-            level += "   ";
-            logPrint(priority, tag, builder.toString());
         }
     }
 
     /**
-     * LOG 底边
+     * 打印方法
+     *
+     * @param priority
+     * @param tag
+     */
+    private void logMethod(int priority, String tag) {
+        boolean isCrash = priority == ApplicationErrorReport.TYPE_CRASH;
+        if (showMethod > 0 || isCrash) {
+            StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+            if (Utils.isEmpty(trace)) return;
+
+            int method = isCrash ? 5 : this.showMethod;
+            int offset = LogFormat.getStackOffset(trace);
+            if (method + offset > trace.length) {
+                method = trace.length - offset - 1;
+            }
+
+            String level = "";
+            for (int i = method; i > 0; i--) {
+                int index = i + offset;
+                if (index >= trace.length) {
+                    continue;
+                }
+                logPrint(priority, tag, LogFormat.getStackInfo(trace[index], level));
+                level += "   ";
+            }
+            logDivider(priority, tag);
+        }
+    }
+
+    /**
+     * 底部边线
      *
      * @param priority
      * @param tag
      */
     private void logBottomBorder(int priority, String tag) {
-        logPrint(priority, tag, BOTTOM_BORDER);
+        logPrint(priority, tag, LogFormat.BOTTOM_BORDER);
     }
 
     /**
-     * LOG 分隔
+     * 内分隔线
      *
      * @param priority
      * @param tag
      */
     private void logDivider(int priority, String tag) {
-        logPrint(priority, tag, MIDDLE_BORDER);
+        logPrint(priority, tag, LogFormat.MIDDLE_BORDER);
     }
 
     /**
-     * LOG 内容
+     * 系统分行
+     *
+     * @param message
+     * @param tag
+     */
+    private void logMessage(int priority, String tag, String message) {
+        String[] array = message.split(LogFormat.LINE_SEPARATOR);
+        for (String content : array) {
+            logContent(priority, tag, content);
+        }
+    }
+
+    /**
+     * 长度分行
      *
      * @param message
      * @param tag
      */
     private void logContent(int priority, String tag, String message) {
-        Utils.checkNotNull(message);
-        String[] lines = message.split(LINE_SEPARATOR);
-        for (String line : lines) {
-            logPrint(priority, tag, HORIZONTAL_LINE + " " + line);
+        byte[] bytes = message.getBytes();
+        int len = bytes.length;
+        if (len <= LogFormat.CHUNK_SIZE) {
+            logContentLine(priority, tag, message);
+            return;
+        }
+        for (int i = 0; i < len; i += LogFormat.CHUNK_SIZE) {
+            int count = Math.min(len - i, LogFormat.CHUNK_SIZE);
+            logContentLine(priority, tag, new String(bytes, i, count));
         }
     }
 
     /**
-     * LOG 打印
+     * 打印一行
+     *
+     * @param message
+     * @param tag
+     */
+    private void logContentLine(int priority, String tag, String message) {
+        logPrint(priority, tag, LogFormat.HORIZONTAL_LINE + " " + message);
+    }
+
+    /**
+     * 系统打印
      *
      * @param priority
      * @param tag
@@ -180,82 +176,63 @@ public class LogConfig implements Config {
      */
     private void logPrint(int priority, String tag, String message) {
         Utils.checkNotNull(message);
-        if (print) {
+        if (printLog) {
             Log.println(priority, tag, message);
         }
-        if (write) {
-            String time = DateFormat.getDateTimeInstance().format(new Date());
-            StringBuilder builder = new StringBuilder();
-            builder.append(time)
-                    .append(" (")
-                    .append(Utils.getLevel(priority))
-                    .append(") ")
-                    .append(tag)
-                    .append(": ")
-                    .append(message);
-            writer.sendMessage(writer.obtainMessage(priority, builder.toString()));
+        if (writeLog && priority>= Log.VERBOSE && priority <= Log.ASSERT) {
+            String msg = LogFormat.getFormatLog(priority, tag, message);
+            loggerWriter.sendMessage(loggerWriter.obtainMessage(priority, msg));
+            return;
         }
-    }
-
-    /**
-     * 栈位置
-     *
-     * @param trace
-     * @return
-     */
-    private int getStackOffset(StackTraceElement[] trace) {
-        Utils.checkNotNull(trace);
-        for (int i = MIN_STACK_OFFSET; i < trace.length; i++) {
-            StackTraceElement e = trace[i];
-            String name = e.getClassName();
-            if (!name.equals(LoggerPrinter.class.getName()) && !name.equals(Logger.class.getName())) {
-                return --i;
-            }
+        if (crashLog && priority == ApplicationErrorReport.TYPE_CRASH) {
+            String msg = LogFormat.getFormatLog(priority, tag, message);
+            loggerWriter.sendMessage(loggerWriter.obtainMessage(priority, msg));
         }
-        return -1;
-    }
-
-    private String getSimpleClassName(String name) {
-        Utils.checkNotNull(name);
-        int lastIndex = name.lastIndexOf(".");
-        return name.substring(lastIndex + 1);
-    }
-
-    private String getFormatTag(String tag) {
-        if (!Utils.isEmpty(tag) && !Utils.equals(this.tag, tag)) {
-            return this.tag + "-" + tag;
-        }
-        return this.tag;
     }
 
     public static class Builder {
 
-        private int method = 2;
-        private boolean thread = false;
-        private boolean print = true;
-        private boolean write = false;
-        private String tag = "LOVE_LOGGER";
+        private Context context;
+        private int showMethod = 1;
+        private boolean showThread = false;
+        private boolean printLog = true;
+        private boolean writeLog = false;
+        private boolean crashLog = false;
+        private CrashCall callback;
+        private String tag = Logger.TAG;
 
-        private Builder() {
+        public Builder(Context context) {
+            this.context = context.getApplicationContext();
         }
 
-        public Builder thread(boolean show) {
-            this.thread = show;
+        public Builder showThread(boolean show) {
+            this.showThread = show;
             return this;
         }
 
-        public Builder method(int count) {
-            this.method = count;
+        public Builder showMethod(int count) {
+            this.showMethod = count;
             return this;
         }
 
-        public Builder print(boolean print) {
-            this.print = print;
+        public Builder printLog(boolean print) {
+            this.printLog = print;
             return this;
         }
 
-        public Builder write(boolean write) {
-            this.write = write;
+        public Builder writeLog(boolean write) {
+            this.writeLog = write;
+            return this;
+        }
+
+        public Builder crashLog(boolean write) {
+            this.crashLog = write;
+            return this;
+        }
+
+        public Builder crashLog(boolean write, CrashCall callback) {
+            this.crashLog = write;
+            this.callback = callback;
             return this;
         }
 
