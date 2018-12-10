@@ -26,7 +26,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'com.github.liuhanling:Logger:1.1'
+    implementation 'com.github.liuhanling:Logger:1.2'
 }
 ```
 
