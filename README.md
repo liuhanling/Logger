@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/liuhanling/Logger.svg)](https://jitpack.io/#liuhanling/Logger)
+
 # Android Logger
 Android 日志框架。
 
