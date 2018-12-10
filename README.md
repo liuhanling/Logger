@@ -26,7 +26,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'com.github.liuhanling:Logger:1.0'
+    implementation 'com.github.liuhanling:Logger:1.1'
 }
 ```
 
@@ -48,12 +48,13 @@ Logger.init(this);
  Or
  
 ```java
-LogConfig config = LogConfig.Builder()
-        .thread(true)               // (可选) 显示线程信息，默认false
-        .method(2)                  // (可选) 显示方法条数，默认2
-        .print(BuildConfig.DEBUG)   // (可选) 是否打印日志，默认true
-        .write(!BuildConfig.DEBUG)  // (可选) 是否保存日志，默认false
-        .tag("LOVE_LOGGER")         // (可选) 定义日志标记，默认LOVE_LOGGER
+LogConfig config = new LogConfig.Builder(this)
+        .showThread(true)               // (可选) 显示线程信息，默认false
+        .showMethod(5)                  // (可选) 显示方法条数，默认1
+        .printLog(BuildConfig.DEBUG)    // (可选) 是否打印日志，默认true
+        .writeLog(true)                 // (可选) 是否保存日志，默认false
+        .crashLog(true)                 // (可选) 是否保存异常，默认false
+        .tag("LOVE_LOGGER")             // (可选) 定义日志标记，默认LOVE_LOGGER
         .build();
 
 Logger.init(config);
