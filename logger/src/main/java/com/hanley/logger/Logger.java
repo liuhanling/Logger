@@ -4,7 +4,7 @@ import android.content.Context;
 
 public final class Logger {
 
-    public static final String TAG = "LOVE_LOGGER";
+    static final String TAG = "LOVE_LOGGER";
 
     private static Printer printer = null;
 
@@ -13,18 +13,22 @@ public final class Logger {
 
     public static void init(Context context) {
         if (printer == null) {
-            printer = new LoggerPrinter(context);
+            printer = new LogPrinter(context);
         }
     }
 
     public static void init(Config config) {
         if (printer == null) {
-            printer = new LoggerPrinter(config);
+            printer = new LogPrinter(config);
         }
     }
 
     public static Printer t(String tag) {
         return printer.t(tag);
+    }
+
+    public static void w(Object object) {
+        printer.w(object);
     }
 
     public static void v(String message, Object... args) {
@@ -35,6 +39,10 @@ public final class Logger {
         printer.d(object);
     }
 
+    public static void d(String message, Throwable tr) {
+        printer.d(message, tr);
+    }
+
     public static void d(String message, Object... args) {
         printer.d(message, args);
     }
@@ -43,32 +51,52 @@ public final class Logger {
         printer.i(message, args);
     }
 
+    public static void w(String message, Object object) {
+        printer.w(message, object);
+    }
+
     public static void w(String message, Object... args) {
         printer.w(message, args);
+    }
+
+    public static void e(Object object) {
+        printer.e(object);
+    }
+
+    public static void e(String message, Throwable tr) {
+        printer.e(message, tr);
     }
 
     public static void e(String message, Object... args) {
         printer.e(message, args);
     }
 
-    public static void e(Throwable throwable, String message, Object... args) {
-        printer.e(throwable, message, args);
-    }
-
     public static void a(String message, Object... args) {
         printer.a(message, args);
     }
 
+    public static void c(String message, Throwable tr) {
+        printer.c(message, tr);
+    }
+
+    public static void j(String json) {
+        printer.j(json);
+    }
+
+    public static void j(String message, String json) {
+        printer.j(message, json);
+    }
+
+    public static void x(String xml) {
+        printer.x(xml);
+    }
+
+    public static void x(String message, String xml) {
+        printer.x(message, xml);
+    }
+
     public static void log(int priority, String tag, String message, Throwable throwable) {
         printer.log(priority, tag, message, throwable);
-    }
-
-    public static void json(String json) {
-        printer.json(json);
-    }
-
-    public static void xml(String xml) {
-        printer.xml(xml);
     }
 
 }

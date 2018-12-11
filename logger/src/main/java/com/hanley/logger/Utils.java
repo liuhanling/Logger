@@ -1,6 +1,5 @@
 package com.hanley.logger;
 
-import android.app.ApplicationErrorReport;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -9,6 +8,10 @@ import java.util.Collection;
 public class Utils {
 
     private Utils() {
+    }
+
+    public static boolean isEmpty(Object obj) {
+        return obj == null;
     }
 
     public static boolean isEmpty(String str) {
@@ -41,7 +44,7 @@ public class Utils {
                 return "E";
             case Log.ASSERT:
                 return "A";
-            case ApplicationErrorReport.TYPE_CRASH:
+            case LogPrinter.CRASH:
                 return "C";
             default:
                 return "UNKNOWN";
@@ -51,6 +54,9 @@ public class Utils {
     public static String toString(Object object) {
         if (object == null) {
             return "null";
+        }
+        if (object instanceof Throwable) {
+            return Log.getStackTraceString((Throwable) object);
         }
         if (!object.getClass().isArray()) {
             return object.toString();
