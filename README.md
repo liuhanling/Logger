@@ -1,7 +1,7 @@
 [![](https://jitpack.io/v/liuhanling/Logger.svg)](https://jitpack.io/#liuhanling/Logger)
 
-### Logger
-Android Logger 日志框架。
+### Android Logger
+Simple and powerful logger for android。
 
 ### Feature
 
