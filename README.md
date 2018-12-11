@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/liuhanling/Logger.svg)](https://jitpack.io/#liuhanling/Logger)
+
 # Android Logger
 Android 日志框架。
 
@@ -26,7 +28,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'com.github.liuhanling:Logger:1.1'
+    implementation 'com.github.liuhanling:Logger:1.2'
 }
 ```
 
