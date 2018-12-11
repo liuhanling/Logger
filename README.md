@@ -1,17 +1,16 @@
 [![](https://jitpack.io/v/liuhanling/Logger.svg)](https://jitpack.io/#liuhanling/Logger)
 
-# Android Logger
-Android 日志框架。
+### Logger
+Android Logger 日志框架。
 
-Feature
---------------
+### Feature
+
 - 支持格式化打印Log
 - 支持基本数据类型、字符串、数组、集合、Json、Xml、Throwable等打印
 - 支持本地保存Log
 - 支持本地保存Crash Log，以及Crash回调处理
 
-Dependency
---------------
+### Dependency
 
 1. Add it in your root `build.gradle` at the end of repositories
 
@@ -32,8 +31,7 @@ dependencies {
 }
 ```
 
-Usage
---------------
+### Usage
 
 AndroidManifest.xml
 
@@ -68,8 +66,7 @@ LogConfig config = new LogConfig.Builder(this)
 Logger.init(config);
 ```
 
-Options
---------------
+### Options
 
 ```java
 Logger.v("verbose");
@@ -108,7 +105,7 @@ Logger.j(JSON);
 Logger.j("json:", JSON);
 ```
 
-# License
+###  License
 <pre>
 MIT License
 
