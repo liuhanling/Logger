@@ -1,7 +1,7 @@
 [![](https://jitpack.io/v/liuhanling/Logger.svg)](https://jitpack.io/#liuhanling/Logger)
 
 ### Android Logger
-Simple and powerful logger for android。
+Simple and powerful logger for android.
 
 ### Feature
 
@@ -65,6 +65,9 @@ LogConfig config = new LogConfig.Builder(this)
 
 Logger.init(config);
 ```
+
+### Output
+<img src='https://github.com/liuhanling/Logger/blob/master/preview/logcat.png'/>
 
 ### Options
 
