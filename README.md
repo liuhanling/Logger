@@ -7,8 +7,8 @@ Simple and powerful logger for android.
 
 - 支持格式化打印Log
 - 支持基本数据类型、字符串、数组、集合、Json、Xml、Throwable等打印
-- 支持本地保存Log
-- 支持本地保存Crash Log，以及Crash回调处理
+- 支持本地保存Log，路径:logger/yyyy-MM-dd/yyyy_MM_dd_HHmmss.log
+- 支持本地保存CrashLog，路径:logger/yyyy-MM-dd/crash_yyyy_MM_dd_HHmmss.log
 
 ### Dependency
 
@@ -27,7 +27,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'com.github.liuhanling:Logger:1.3'
+    implementation 'com.github.liuhanling:Logger:1.4'
 }
 ```
 
@@ -38,6 +38,7 @@ AndroidManifest.xml
 ```xml
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+If the Build.VERSION.SDK_INT >=23, please apply for permission yourself.
 ```
 
 Application
@@ -51,7 +52,8 @@ Logger.init(this);
 LogConfig config = new LogConfig.Builder(this)
         .showThread(true)                   // (可选) 显示线程信息，默认false
         .showMethod(0)                      // (可选) 显示方法条数，默认1
-        .printLog(BuildConfig.DEBUG)        // (可选) 是否打印日志，默认BuildConfig.DEBUG
+        .formatLog(true)                    // (可选) 是否格式日志，默认BuildConfig.DEBUG
+        .printLog(true)                     // (可选) 是否打印日志，默认BuildConfig.DEBUG
         .writeLog(true)                     // (可选) 是否保存日志，默认false
         .crashLog(true)                     // (可选) 是否保存异常，默认false
 //      .crashLog(true, new CrashCall() {   // (可选) 设置异常回调，默认无
