@@ -1,4 +1,4 @@
-package com.hanley.logger;
+package com.liuhanling.logger;
 
 public interface Printer {
 
