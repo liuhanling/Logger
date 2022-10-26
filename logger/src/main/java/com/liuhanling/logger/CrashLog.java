@@ -1,56 +1,83 @@
 package com.liuhanling.logger;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Looper;
 import android.os.Process;
 import android.widget.Toast;
 
-public class CrashLog implements Thread.UncaughtExceptionHandler {
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
-    private final Context context;
-    private final CrashCall callback;
+public final class CrashLog implements Thread.UncaughtExceptionHandler {
 
-    private Thread.UncaughtExceptionHandler mHandler;
+    private Context mContext;
+    private CrashCall mCrashCall;
+    private Thread.UncaughtExceptionHandler mCrashHandler;
 
-    public CrashLog(Context context, CrashCall callback) {
-        this.context = context;
-        this.callback = callback;
+    private CrashLog() {
+    }
+
+    private static final class Holder {
+        @SuppressLint("StaticFieldLeak")
+        private static final CrashLog INSTANCE = new CrashLog();
+    }
+
+    public static CrashLog getInstance() {
+        return Holder.INSTANCE;
+    }
+
+    public CrashLog init(Context context) {
+        this.mContext = context;
+        return Holder.INSTANCE;
+    }
+
+    public CrashLog setCrashCall(CrashCall crashCall) {
+        this.mCrashCall = crashCall;
+        return Holder.INSTANCE;
     }
 
     public void start() {
-        this.mHandler = Thread.getDefaultUncaughtExceptionHandler();
+        this.mCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(this);
     }
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        Logger.c("Error:", e);
-        if (mHandler != null && e == null) {
-            mHandler.uncaughtException(t, e);
+        Logger.c("Crash:", e);
+        // 1、捕获到的异常为NULL，需要交给系统处理
+        // 2、捕获到的异常非NULL，需要自己处理异常
+        if (this.mCrashHandler != null && e == null) {
+            this.mCrashHandler.uncaughtException(t, e);
         } else {
-            handleException();
+            handleException(e);
         }
     }
 
-    private void handleException() {
-        if (callback != null) {
-            callback.handle();
-        } else {
-            new Thread() {
-                @Override
-                public void run() {
-                    Looper.prepare();
-                    Toast.makeText(context, "程序出现异常，即将退出。", Toast.LENGTH_LONG).show();
-                    Looper.loop();
-                }
-            }.start();
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // ignore
+    /**
+     * 默认处理异常
+     */
+    private void handleException(final Throwable e) {
+        // App进程处于挂掉边缘，已经是未响应状态，因为事件传递已经不起作用了，所以我们需要再激活一个Looper
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+                Toast.makeText(mContext, "程序异常，退出重启!", Toast.LENGTH_SHORT).show();
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        if (mCrashCall != null) {
+                            mCrashCall.handleException(e);
+                        } else {
+                            Process.killProcess(Process.myPid());
+                            System.exit(0);
+                        }
+                    }
+                }, 1000);
+                Looper.loop();
             }
-            Process.killProcess(Process.myPid());
-            System.exit(1);
-        }
+        });
     }
 }

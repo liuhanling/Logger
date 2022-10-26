@@ -1,30 +1,23 @@
 package com.liuhanling.logger;
 
 import android.annotation.SuppressLint;
-import android.os.Environment;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 class LogFormat {
 
-    static final String FOLDER = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar + "logger";
-
-    static final int LOG_SIZE = 4000;
-    private static final int MIN_STACK_OFFSET = 5;
-
-    private static final char TOP_LEFT_CORNER = '┌';
-    private static final char BOTTOM_LEFT_CORNER = '└';
-    private static final char MIDDLE_CORNER = '├';
+    static final int MIN_STACK_OFFSET = 5;
+    static final char TOP_LEFT_CORNER = '┌';
+    static final char BOTTOM_LEFT_CORNER = '└';
+    static final char MIDDLE_CORNER = '├';
     static final char HORIZONTAL_LINE = '│';
-    private static final String DOUBLE_DIVIDER = "────────────────────────────────────────────────────────────";
-    private static final String SINGLE_DIVIDER = "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
-
+    static final String LINE_SEPARATOR = "\n";
+    static final String DOUBLE_DIVIDER = "────────────────────────────────────────────────────────────";
+    static final String SINGLE_DIVIDER = "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
     static final String TOP_BORDER = TOP_LEFT_CORNER + DOUBLE_DIVIDER;
     static final String BOTTOM_BORDER = BOTTOM_LEFT_CORNER + DOUBLE_DIVIDER;
     static final String MIDDLE_BORDER = MIDDLE_CORNER + SINGLE_DIVIDER;
-    static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
     @SuppressLint("SimpleDateFormat")
     private static final SimpleDateFormat TIMESTAMP = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");

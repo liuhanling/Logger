@@ -1,14 +1,14 @@
 [![](https://jitpack.io/v/liuhanling/Logger.svg)](https://jitpack.io/#liuhanling/Logger)
 
 ### Android Logger
-Simple and powerful logger for android.
+简单强大的Android日志管理器
 
 ### Feature
 
 - 支持格式化打印Log
-- 支持基本数据类型、字符串、数组、集合、Json、Xml、Throwable等打印
-- 支持本地保存Log
-- 支持本地保存Crash Log，以及Crash回调处理
+- 支持基本数据类型、字符串、对象、数组、集合、Json、Xml、Throwable等打印
+- 支持本地保存log，路径：/logger/yyyy-MM-dd/yyyy_MM_dd_HHmmss.log
+- 支持本地保存crash，路径：/logger/yyyy-MM-dd/crash_yyyy_MM_dd_HHmmss.log
 
 ### Dependency
 
@@ -17,7 +17,6 @@ Simple and powerful logger for android.
 ```gradle
 allprojects {
     repositories {
-        ...
         maven { url "https://jitpack.io" }
     }
 }
@@ -27,7 +26,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'com.github.liuhanling:Logger:1.3'
+    implementation 'com.github.liuhanling:Logger:1.5'
 }
 ```
 
@@ -38,31 +37,33 @@ AndroidManifest.xml
 ```xml
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+注意：Build.VERSION.SDK_INT >=23, 请动态申请权限.
 ```
 
 Application
 
 ```java
+// 简洁配置
 Logger.init(this);
 ```
  Or
- 
-```java
-LogConfig config = new LogConfig.Builder(this)
-        .showThread(true)                   // (可选) 显示线程信息，默认false
-        .showMethod(0)                      // (可选) 显示方法条数，默认1
-        .printLog(BuildConfig.DEBUG)        // (可选) 是否打印日志，默认BuildConfig.DEBUG
-        .writeLog(true)                     // (可选) 是否保存日志，默认false
-        .crashLog(true)                     // (可选) 是否保存异常，默认false
-//      .crashLog(true, new CrashCall() {   // (可选) 设置异常回调，默认无
-//          @Override
-//          public void handle() {
-//              // remove activities and exit
-//          }
-//      })
-        .tag("LOVE_LOGGER")                 // (可选) 定义日志标记，默认LOVE_LOGGER
-        .build();
 
+```java
+// 自定义配置
+LogConfig config = LogConfig.builder(this)
+		.formatLog(true)            // (可选) 打印信息格式，默认false
+		.showThread(true)           // (可选) 打印线程信息，默认false
+		.showMethod(1)              // (可选) 打印方法行数，默认0
+		.printLog(true)             // (可选) 是否打印日志，默认true
+		.writeLog(true)             // (可选) 是否保存日志，默认true
+		.crashLog(true)             // (可选) 是否保存异常，默认true
+		.crashCall(e -> {           // (可选) 全局异常处理，默认kill
+			// AppManager.getInstance().exit();
+		})
+		.path("/logger")            // (可选) 配置存储目录，默认/logger
+		.tag("LOVE_LOGGER")         // (可选) 配置日志标记，默认LOGGER
+		.build();
 Logger.init(config);
 ```
 
@@ -72,17 +73,55 @@ Logger.init(config);
 ### Options
 
 ```java
-Logger.v("verbose");
-Logger.d("debug");
-Logger.i("info");
-Logger.w("warn");
-Logger.e("error");
-Logger.a("assert");
+Logger.v(Object object);
+Logger.v(String message, Object object);
+
+Logger.d(Object object);
+Logger.d(String message, Object object);
+
+Logger.i(Object object);
+Logger.i(String message, Object object);
+
+Logger.w(Object object);
+Logger.w(String message, Object object);
+
+Logger.e(Object object);
+Logger.e(String message, Object object);
+
+Logger.a(Object object);
+Logger.a(String message, Object object);
+
+Logger.c(Object object);
+Logger.c(String message, Object object);
+
+Logger.j(String json);
+Logger.j(String message, String json);
+
+Logger.x(String xml);
+Logger.x(String message, String xml);
+
+Logger.log(int priority, Object object);
+Logger.log(int priority, String message, Object object);
 ```
 
-Support string format
+Support object
 ```java
-Logger.d("Hello %s", "Logger");
+Logger.v(object);
+Logger.d(object);
+Logger.i(object);
+Logger.w(object);
+Logger.e(object);
+Logger.a(object);
+```
+
+Support collections
+```java
+Logger.v(MAP/SET/LIST/ARRAY);
+Logger.d(MAP/SET/LIST/ARRAY);
+Logger.i(MAP/SET/LIST/ARRAY);
+Logger.w(MAP/SET/LIST/ARRAY);
+Logger.e(MAP/SET/LIST/ARRAY);
+Logger.a(MAP/SET/LIST/ARRAY);
 ```
 
 Support throwable
@@ -91,12 +130,16 @@ Logger.e(e);
 Logger.e("Error:", e);
 ```
 
-Support collections
+Support crash
+
 ```java
-Logger.d(MAP/SET/LIST/ARRAY);
+// 单独写入crash.log
+Logger.c(tr);
+Logger.c("Crash:", tr);
 ```
 
 Support Xml
+
 ```java
 Logger.x(XML);
 Logger.x("xml:", XML);
@@ -108,7 +151,14 @@ Logger.j(JSON);
 Logger.j("json:", JSON);
 ```
 
+Support tag
+
+```java
+Logger.tag("tag").v(object);
+```
+
 ###  License
+
 <pre>
 MIT License
 

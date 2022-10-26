@@ -5,7 +5,7 @@ import android.util.Log;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class Utils {
+public final class Utils {
 
     private Utils() {
     }
@@ -27,7 +27,7 @@ public class Utils {
     }
 
     public static boolean equals(String a, String b) {
-        return (a == null && b == null) || (a != null && b != null && a.equals(b));
+        return (a == null && b == null) || (a != null && a.equals(b));
     }
 
     public static String getLevel(int level) {
@@ -44,16 +44,16 @@ public class Utils {
                 return "E";
             case Log.ASSERT:
                 return "A";
-            case LogPrinter.CRASH:
+            case Config.CRASH:
                 return "C";
             default:
                 return "UNKNOWN";
         }
     }
 
-    public static String toString(Object object) {
+    public static <T> String toString(T object) {
         if (object == null) {
-            return "null";
+            return "";
         }
         if (object instanceof Throwable) {
             return Log.getStackTraceString((Throwable) object);
@@ -88,7 +88,7 @@ public class Utils {
         if (object instanceof Object[]) {
             return Arrays.deepToString((Object[]) object);
         }
-        return "Couldn't find a correct type for the object";
+        return object.toString();
     }
 
     public static <T> T checkNotNull(final T obj) {

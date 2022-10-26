@@ -1,5 +1,5 @@
 package com.liuhanling.logger;
 
 public interface CrashCall {
-    void handle();
+    void handleException(Throwable e);
 }

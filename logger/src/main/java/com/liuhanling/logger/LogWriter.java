@@ -13,7 +13,6 @@ import java.util.Date;
 
 public class LogWriter extends Handler {
 
-    private static final int MAX_BYTES = 10 * 1024 * 1024;
     @SuppressLint("SimpleDateFormat")
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     @SuppressLint("SimpleDateFormat")
@@ -25,9 +24,9 @@ public class LogWriter extends Handler {
     private String crashFile;
     private String otherFile;
 
-    LogWriter(Looper looper, String folder) {
+    LogWriter(Looper looper, String path) {
         super(looper);
-        this.folderName = Utils.checkNotNull(folder);
+        this.folderName = Utils.checkNotNull(path);
         this.otherFile = String.format("%s.log", TIME_FORMAT.format(new Date()));
     }
 
@@ -56,7 +55,7 @@ public class LogWriter extends Handler {
     }
 
     private File getFile(int level) throws IOException {
-        if (level == LogPrinter.CRASH) {
+        if (level == Config.CRASH) {
             return getCrashFile();
         } else {
             return getOtherFile();
@@ -71,7 +70,7 @@ public class LogWriter extends Handler {
             folder.mkdirs();
         }
 
-        if (time - crashTime > 5 * 1000) {
+        if (time - crashTime > 10 * 1000) {
             crashTime = time;
             crashFile = String.format("crash_%s.log", TIME_FORMAT.format(crashTime));
         }
@@ -93,7 +92,7 @@ public class LogWriter extends Handler {
         File file = new File(folder, otherFile);
         if (!file.exists()) {
             file.createNewFile();
-        } else if (file.length() >= MAX_BYTES) {
+        } else if (file.length() >= Config.LOG_FILE_SIZE) {
             otherFile = String.format("%s.log", TIME_FORMAT.format(new Date()));
             file = new File(folder, otherFile);
         }
